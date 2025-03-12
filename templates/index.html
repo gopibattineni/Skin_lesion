@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css?family=Play&display=swap" rel="stylesheet">
+    <title>Identification of Skin Lesion in Assisting CIRM Doctors</title>
+    <meta name="theme-color" content="red">
+</head>
+
+<body>
+
+    <div class="very_main">
+        <header>
+            <div class="top_frame">
+                <h1>Identification of Skin Lesion in Assisting CIRM Doctors</h1>
+                <img src="/static/css/cirmservizi.jpg" class="logo" alt="CIRM Logo">
+            </div>
+        </header>
+
+        <p>Via Delle Architectura 41, Roma, 00144</p>
+        <h4 class="description">
+            Upload your skin lesion images and click 'Diagnosis Check' to receive the diagnosis.
+        </h4>
+
+        {% extends "base.html" %} {% block content %}
+
+        <div>
+            <form id="upload-file" method="POST" enctype="multipart/form-data" action="/predict">
+                <input type="file" name="file" id="imageUpload" accept=".png, .jpg, .jpeg, .dcm, .webp, .pdf" style="display: none;">
+                
+                <!-- Custom Button to Open File Dialog -->
+                <button type="button" id="customUploadButton">Feed me with Your Image</button>
+            </form>
+
+            <div class="image-section" style="display:none;">
+                <div class="img-preview">
+                    <img id="uploadedImage" src="" alt="Preview">
+                </div>
+                <h3 id="result"></h3>
+            </div>
+
+            <!-- Diagnosis Button -->
+            <button type="button" id="btn-predict">Diagnosis Check</button>
+
+            <h3 id="result">
+                <span>{{ prediction }}</span>
+            </h3>
+
+            <div class="loader" style="display:none;"></div>
+
+        </div>
+
+        <h5 class="Developer">
+             <p>Developed by Dr Gopi Battineni; contact: gopi.battineni@cirm.it (+39) 3331728206</p>
+        </h5>
+        
+
+        <footer class="disclaimer">
+            <p>Disclaimer: Please consider me an AI agent developed with deep learning technologies with accuracy of 92.14%. Recommend
+                you to ensure expert approval before confirmation.</p>
+            
+        </footer>
+          
+
+        {% endblock %}
+        
+        
+
+    </div>
+
+</body>
+
+</html>
