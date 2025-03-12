@@ -6,4 +6,6 @@ tensorflow==2.16.1
 setuptools>=45
 opencv-python
 PyPDF2
+pdf2image
+
 
