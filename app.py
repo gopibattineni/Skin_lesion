@@ -1,6 +1,9 @@
 import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # Suppress INFO and WARNING logs
 import cv2
 import numpy as np
+import tensorflow as tf
+tf.config.set_visible_devices([], "GPU")  # Prevent TensorFlow from looking for GPUs
 import PyPDF2
 from pdf2image import convert_from_path
 from tensorflow.keras.models import load_model
