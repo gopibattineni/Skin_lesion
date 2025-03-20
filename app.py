@@ -12,8 +12,8 @@ import time
 app = Flask(__name__)
 
 # Configure Celery for background tasks
-app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
-app.config['result_backend'] = 'redis://localhost:6379/0'
+app.config['CELERY_BROKER_URL'] = os.getenv('REDIS_URL', 'redis://localhost:6379/0')  # Use Render Redis URL
+app.config['result_backend'] = os.getenv('REDIS_URL', 'redis://localhost:6379/0')  # Use Render Redis URL
 
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
@@ -31,28 +31,43 @@ classes = ["Actinic keratosis", "Basal cell carcinoma", "Benign keratosis",
 
 # Function to make predictions on images
 def model_predict(img_path):
-    # Use OpenCV for faster image loading and preprocessing
-    img = cv2.imread(img_path)
-    img = cv2.resize(img, (224, 224))  # Resize to target size
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # Convert to RGB
-    x = np.expand_dims(img, axis=0)
-    x = preprocess_input(x)
+    try:
+        # Use OpenCV for faster image loading and preprocessing
+        img = cv2.imread(img_path)
+        if img is None:
+            raise ValueError("Unable to read image file.")
+        
+        img = cv2.resize(img, (224, 224))  # Resize to target size
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # Convert to RGB
+        x = np.expand_dims(img, axis=0)
+        x = preprocess_input(x)
 
-    # Make predictions
-    preds = model.predict(x)
+        # Make predictions
+        preds = model.predict(x)
 
-    # Get top 3 predictions
-    top_3_indices = np.argsort(preds[0])[-3:][::-1]  # Sort and get top 3 indices
-    top_3_scores = preds[0][top_3_indices] * 100  # Convert to percentage
+        # Get top 3 predictions
+        top_3_indices = np.argsort(preds[0])[-3:][::-1]  # Sort and get top 3 indices
+        top_3_scores = preds[0][top_3_indices] * 100  # Convert to percentage
 
-    # Format predictions
-    top_3_results = [(classes[i], top_3_scores[idx]) for idx, i in enumerate(top_3_indices)]
-    return top_3_results
+        # Format predictions
+        top_3_results = [(classes[i], top_3_scores[idx]) for idx, i in enumerate(top_3_indices)]
+        return top_3_results
+    except Exception as e:
+        print(f"Error during prediction: {e}")
+        return None
 
 # Celery task for background prediction
 @celery.task
 def predict_task(img_path):
-    return model_predict(img_path)
+    try:
+        result = model_predict(img_path)
+        if result is None:
+            raise ValueError("Prediction failed.")
+        return result
+    finally:
+        # Clean up: Delete the uploaded file after processing
+        if os.path.exists(img_path):
+            os.remove(img_path)
 
 @app.route("/", methods=["GET"])
 def index():
@@ -89,6 +104,8 @@ def check_status(task_id):
     task = predict_task.AsyncResult(task_id)
     if task.ready():
         result = task.result()
+        if result is None:
+            return jsonify({"status": "failed", "error": "Prediction failed."}), 500
         return jsonify({"status": "completed", "result": result})
     else:
         return jsonify({"status": "pending"})
