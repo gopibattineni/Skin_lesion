@@ -4,8 +4,8 @@ numpy<2
 gunicorn==20.1.0
 tensorflow==2.16.1
 setuptools>=45
-opencv-python
-PyPDF2
-pdf2image
+celery==5.3.6
+redis==5.0.1
+opencv-python-headless==4.9.0.80
 
 
